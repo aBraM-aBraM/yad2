@@ -1,10 +1,12 @@
 import dataclasses
 import time
+import utils
 
 from selenium.webdriver.common.by import By
 import re
 
 from undetected_chromedriver.webelement import WebElement
+from selenium.common.exceptions import NoSuchElementException
 
 import consts
 
@@ -38,10 +40,15 @@ class Yad2:
     def _get_phone_number(self, item):
         image_element: WebElement = item.find_element(By.XPATH, '//div[starts-with(@id, "image_")]')
         image_element.click()
-        time.sleep(1)
-        self._driver.find_element(By.CLASS_NAME, 'lightbox_contact_seller_button').click()
-        time.sleep(1)
-        phone_number: WebElement = self._driver.find_element(By.XPATH, '//a[starts-with(@class, "phone_number")]')
+        phone_button: WebElement = utils.retry(self._driver.find_element, By.CLASS_NAME,
+                                               'lightbox_contact_seller_button',
+                                               exceptions=(NoSuchElementException,),
+                                               timeout=0.1)
+        phone_button.click()
+        phone_number: WebElement = utils.retry(self._driver.find_element, By.XPATH,
+                                               '//a[starts-with(@class, "phone_number")]',
+                                               exceptions=(NoSuchElementException,),
+                                               timeout=0.1)
         print(phone_number.text)
 
     def get_predicated_products(self, url: str, predicate):
