@@ -1,4 +1,5 @@
 import undetected_chromedriver
+import logging
 
 import consts
 import predicates
@@ -13,21 +14,23 @@ def initialize_driver():
 
     # just some options passing in to skip annoying popups
     options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
+
     driver = undetected_chromedriver.Chrome(options=options)
+    driver.implicitly_wait(10)
 
     return driver
 
 
 def main():
-    driver = initialize_driver()
-    yad2 = Yad2(driver)
-    products = yad2.get_predicated_products(consts.ELECTRIC_GUITARS_URL, predicates.is_fender)
-    for products in products:
-        print("===========")
-        print(f"name: {products.details.title}")
-        print(f"price: {products.details.price}")
-        print(f"phone number: {products.phone}")
-        print("===========")
+    try:
+        driver = initialize_driver()
+        logging.basicConfig(filename="result.log")
+        yad2 = Yad2(driver, consts.ELECTRIC_GUITARS_URL)
+        products = yad2.get_predicated_products(predicates.is_fender)
+        map(logging.info, products)
+        driver.close()
+    except Exception as e:
+        logging.critical(e)
 
 
 if __name__ == '__main__':
