@@ -1,5 +1,5 @@
-import dataclasses
-import time
+from typing import List
+
 import utils
 
 from selenium.webdriver.common.by import By
@@ -8,20 +8,7 @@ import re
 from undetected_chromedriver.webelement import WebElement
 from selenium.common.exceptions import NoSuchElementException
 
-import consts
-
-
-@dataclasses.dataclass
-class Details:
-    title: str
-    area: str
-    price: str
-
-
-@dataclasses.dataclass
-class Item:
-    details: Details
-    phone: str
+from structs import Details, Product
 
 
 class Yad2:
@@ -30,34 +17,41 @@ class Yad2:
     def __init__(self, driver):
         self._driver = driver
 
-    def _get_items(self, url):
+    def _get_web_elements(self, url) -> List[WebElement]:
         self._driver.get(url)
 
-        return [item for item in
+        return [web_element for web_element in
                 self._driver.find_element(By.CLASS_NAME, "feed_list").find_elements(By.CSS_SELECTOR, "*")
-                if Yad2.YAD2_ITEM_PATTERN.match(item.get_attribute("id"))]
+                if Yad2.YAD2_ITEM_PATTERN.match(web_element.get_attribute("id"))]
 
-    def _get_phone_number(self, item):
-        image_element: WebElement = item.find_element(By.XPATH, '//div[starts-with(@id, "image_")]')
+    def _get_phone_number(self, web_element: WebElement) -> str:
+        image_element: WebElement = web_element.find_element(By.XPATH, './child::div[starts-with(@id, "image_")]')
         image_element.click()
         phone_button: WebElement = utils.retry(self._driver.find_element, By.CLASS_NAME,
                                                'lightbox_contact_seller_button',
                                                exceptions=(NoSuchElementException,),
                                                timeout=0.1)
         phone_button.click()
-        phone_number: WebElement = utils.retry(self._driver.find_element, By.XPATH,
-                                               '//a[starts-with(@class, "phone_number")]',
-                                               exceptions=(NoSuchElementException,),
-                                               timeout=0.1)
-        print(phone_number.text)
+        phone_number_element: WebElement = utils.retry(self._driver.find_element, By.XPATH,
+                                                       '//a[starts-with(@class, "phone_number")]',
+                                                       exceptions=(NoSuchElementException,),
+                                                       timeout=0.1)
+        phone_number = phone_number_element.text
+        self._driver.find_element(By.CLASS_NAME, "close_ad").click()
+        return phone_number
 
-    def get_predicated_products(self, url: str, predicate):
-        items = self._get_items(url)
-        for item in items:
-            print(self._get_details(item))
-        self._get_phone_number(items[0])
+    def get_predicated_products(self, url: str, *predicates):
+        products = []
+        web_elements = self._get_web_elements(url)
+        for web_element in web_elements:
+            for predicate in predicates:
+                product_details = Yad2._get_details(web_element)
+                if predicate(product_details):
+                    products.append(Product(product_details, self._get_phone_number(web_element)))
+        return products
 
-    def _get_details(self, item):
-        return Details(item.find_element(By.CLASS_NAME, "title").text,
-                       item.find_element(By.CLASS_NAME, "area").text,
-                       item.find_element(By.CLASS_NAME, "price").text)
+    @staticmethod
+    def _get_details(web_element: WebElement):
+        return Details(web_element.find_element(By.CLASS_NAME, "title").text,
+                       web_element.find_element(By.CLASS_NAME, "area").text,
+                       web_element.find_element(By.CLASS_NAME, "price").text)
