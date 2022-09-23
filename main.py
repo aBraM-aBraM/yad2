@@ -1,3 +1,4 @@
+import traceback
 from _datetime import datetime
 import json
 import os
@@ -38,9 +39,10 @@ def main():
     try:
         driver = initialize_driver()
         logging.basicConfig(filename="yad2.log",
-                            format='%(asctime)s %(levelname)-8s %(message)s',
+                            filemode="w",
+                            format="%(asctime)s %(levelname)-8s %(message)s",
                             level=logging.INFO,
-                            datefmt='%Y-%m-%d %H:%M:%S')
+                            datefmt="%Y-%m-%d %H:%M:%S")
 
         yad2 = Yad2(driver, consts.ELECTRIC_GUITARS_URL)
 
@@ -51,6 +53,7 @@ def main():
         driver.close()
     except Exception as e:
         logging.critical(e)
+        logging.critical(traceback.format_exc())
 
 
 if __name__ == '__main__':
