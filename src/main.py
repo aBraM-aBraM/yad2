@@ -38,7 +38,7 @@ def save_products(products: List[Details]):
 def main():
     try:
         driver = initialize_driver()
-        logging.basicConfig(filename="yad2.log",
+        logging.basicConfig(filename="../yad2.log",
                             filemode="w",
                             format="%(asctime)s %(levelname)-8s %(message)s",
                             level=logging.INFO,
@@ -46,7 +46,9 @@ def main():
 
         yad2 = Yad2(driver, consts.ELECTRIC_GUITARS_URL)
 
-        products = yad2.get_predicated_products(predicates.is_fender)
+        products = yad2.get_predicated_products(predicates.contains_tokens(consts.FENDER_TOKENS),
+                                                predicates.max_price(7000),
+                                                predicates.min_price(4000))
 
         save_products(products)
 

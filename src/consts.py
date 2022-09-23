@@ -1,8 +1,8 @@
 import os
 
-PRODUCTS_DIR = "products"
+PRODUCTS_DIR = "../products"
 
-PROFILE_PATH = r".\bin"
+PROFILE_PATH = r"../bin"
 
 BASE_URL = "https://www.yad2.co.il/products/"
 ELECTRIC_GUITARS_URL = os.path.join(BASE_URL, "musical-instruments?category=4&item=20&type=454")

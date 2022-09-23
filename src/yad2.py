@@ -1,7 +1,6 @@
 import logging
 from typing import List, Callable
 
-import bs4
 import undetected_chromedriver
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
