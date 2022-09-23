@@ -6,7 +6,7 @@ def retry(func, *args, exceptions=(Exception,), max_retry_count=-1, timeout=0):
     while retries_left != 0:
         try:
             return func(*args)
-        except exceptions as e:
+        except exceptions:
             pass
         finally:
             retries_left -= 1

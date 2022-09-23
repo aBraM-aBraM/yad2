@@ -1,5 +1,7 @@
 import os
 
+PRODUCTS_DIR = "products"
+
 PROFILE_PATH = r".\bin"
 
 BASE_URL = "https://www.yad2.co.il/products/"
