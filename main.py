@@ -46,7 +46,7 @@ def main():
 
         yad2 = Yad2(driver, consts.ELECTRIC_GUITARS_URL)
 
-        products = yad2.get_predicated_products(predicates.is_fender, max_pages=1)
+        products = yad2.get_predicated_products(predicates.is_fender)
 
         save_products(products)
 

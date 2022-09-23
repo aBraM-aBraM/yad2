@@ -67,7 +67,11 @@ class Yad2:
 
             logging.info(f"loaded page {page_number}")
             for item_element in items_elements:
-                product_details = self._get_details(item_element)
+                try:
+                    product_details = self._get_details(item_element)
+                except ValueError:
+                    # ignore products with no given price
+                    continue
                 if any([predicate(product_details) for predicate in predicates]):
                     logging.info(f"adding matching item {product_details}")
                     products.append(product_details)
