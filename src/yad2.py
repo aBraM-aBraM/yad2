@@ -71,7 +71,7 @@ class Yad2:
                 except ValueError:
                     # ignore products with no given price
                     continue
-                if any([predicate(product_details) for predicate in predicates]):
+                if all([predicate(product_details) for predicate in predicates]):
                     logging.info(f"adding matching item {product_details}")
                     products.append(product_details)
 
