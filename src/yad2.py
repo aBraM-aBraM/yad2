@@ -1,5 +1,5 @@
 import logging
-from typing import List, Callable
+from typing import List, Callable, Iterable
 
 import undetected_chromedriver
 from bs4 import BeautifulSoup
@@ -46,14 +46,22 @@ class Yad2:
     def _get_page_count(self) -> int:
         return int(self._driver.find_element(By.XPATH, '//button[@class="page-num"]').text)
 
-    def _get_page(self, page_number: int):
-        self._current_url = "{url}&page={page_number}".format(url=self._base_url, page_number=page_number)
+    def _load_page(self, url: str, query_predicates_str: str, page_number: int = None):
+
+        self._current_url = f"{url}{query_predicates_str}"
+        if page_number:
+            self._current_url += f"&page={page_number}"
+        logging.info(f"loading {self._current_url}")
         self._driver.get(self._current_url)
 
-    def get_predicated_products(self, *predicates: Callable[[Details], bool], max_pages=0) -> List[Details]:
+    def get_predicated_products(self, *predicates: Callable[[Details], bool], max_pages: int = 0,
+                                query_predicates: Iterable[str] = tuple()) -> List[Details]:
         products = []
 
-        self._driver.get(self._base_url)
+        query_predicates_str = ''.join(query_predicates)
+
+        self._load_page(self._base_url, query_predicates_str)
+
         page_count = self._get_page_count()
         logging.info(f"{page_count} pages founded, starting to gather items")
 
@@ -61,7 +69,7 @@ class Yad2:
 
         for page_number in range(1, max_pages):
             # get the current page
-            self._get_page(page_number)
+            self._load_page(self._base_url, query_predicates_str, page_number)
             items_elements = self._get_items_elements()
 
             logging.info(f"loaded page {page_number}")

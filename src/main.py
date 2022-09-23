@@ -9,6 +9,7 @@ import logging
 
 import consts
 import predicates
+from src import query_predicates
 from structs import Details
 from yad2 import Yad2
 
@@ -47,8 +48,7 @@ def main():
         yad2 = Yad2(driver, consts.ELECTRIC_GUITARS_URL)
 
         products = yad2.get_predicated_products(predicates.contains_tokens(consts.FENDER_TOKENS),
-                                                predicates.max_price(7000),
-                                                predicates.min_price(4000))
+                                                query_predicates=(query_predicates.price_range(4000, 7000)))
 
         save_products(products)
 
