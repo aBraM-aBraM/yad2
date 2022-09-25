@@ -80,7 +80,7 @@ class Yad2:
                     # ignore products with no given price
                     continue
                 if all([predicate(product_details) for predicate in predicates]):
-                    logging.info(f"adding matching item {product_details}")
+                    logging.info(f"adding matching item {product_details.title}")
                     products.append(product_details)
 
         return products
@@ -92,4 +92,5 @@ class Yad2:
         return Details(title=web_element.find(class_="title").text,
                        price=int(web_element.find(class_="price").text.partition('₪')[0].replace(",", "").strip()),
                        link=self._get_item_link(web_element),
+                       picture=web_element.find(class_="feedImage")["src"],
                        area=web_element.find(class_="area").text)

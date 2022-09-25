@@ -10,6 +10,7 @@ import logging
 import consts
 import predicates
 from src import query_predicates
+from src.db import Database
 from structs import Details
 from yad2 import Yad2
 
@@ -30,10 +31,8 @@ def initialize_driver():
 
 
 def save_products(products: List[Details]):
-    os.makedirs(consts.PRODUCTS_DIR, exist_ok=True)
-    product_path = os.path.join(consts.PRODUCTS_DIR, datetime.now().strftime("%d_%m_%Y__%H_%M_%S_product"))
-    with open(product_path, "w") as products_fd:
-        products_fd.write(json.dumps([product.__dict__ for product in products]))
+    db = Database(consts.CONNECTION_DB_STRING_PATH)
+    db.add_items(products)
 
 
 def main():

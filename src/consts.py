@@ -1,7 +1,7 @@
 import os
 
 PRODUCTS_DIR = "../products"
-
+CONNECTION_DB_STRING_PATH = "../secrets/connection_string.secret"
 PROFILE_PATH = r"../bin"
 
 BASE_URL = "https://www.yad2.co.il/products/"
