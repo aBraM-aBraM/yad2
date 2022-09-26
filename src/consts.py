@@ -9,3 +9,5 @@ ELECTRIC_GUITARS_URL = os.path.join(BASE_URL, "musical-instruments?category=4&it
 
 # builtins.lower doesn't change non-ascii characters
 FENDER_TOKENS = ("fender", "telecaster", "stratocaster") + ("פנדר", "טלקסטר", "סטראטוקסטר", "סטראט")
+
+ITEM_MESSAGE = "היי ראיתי את המודעה שלך על {} במחיר {} זה עדיין אקטואלי?"

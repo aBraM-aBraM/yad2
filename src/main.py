@@ -5,8 +5,8 @@ import logging
 import consts
 import predicates
 from src import query_predicates
-from src.bot import Yad2Bot
-from yad2 import Yad2
+from src.telegram_bot import TelegramBot
+from yad2_scanner import Yad2Scanner
 
 
 def main():
@@ -24,10 +24,10 @@ def main():
             logging.critical("Couldn't read the bot's token")
             exit(1)
 
-        scanner = Yad2(consts.ELECTRIC_GUITARS_URL,
-                       predicates=[predicates.contains_tokens(consts.FENDER_TOKENS)],
-                       query_predicates=[query_predicates.price_range(4000, 7000)])
-        bot = Yad2Bot(token, scanner)
+        scanner = Yad2Scanner(consts.ELECTRIC_GUITARS_URL,
+                              predicates=[predicates.contains_tokens(consts.FENDER_TOKENS)],
+                              query_predicates=[query_predicates.price_range(4000, 7000)])
+        bot = TelegramBot(token, scanner)
         bot.serve()
 
     except Exception as e:

@@ -1,32 +1,35 @@
-import atexit
 import json
 import time
 import traceback
 from threading import Thread
-from typing import List, Set
+from typing import Set
 
 import telegram
 from telegram import Update, ParseMode
-from telegram.ext import Updater, MessageHandler, Filters, CommandHandler
+from telegram.ext import Updater, MessageHandler, Filters
 from telegram.ext import CallbackContext
 
 import logging
+import urllib.parse
+
+from src import consts
 from src.structs import Details
-from src.yad2 import Yad2
+from src.yad2_scanner import Yad2Scanner
 
 YES = ["yes", "y"]
 MEMBERS_CHAT_IDS_PATH = "../secrets/members_chat_ids.secret"
 
 UNKNOWN_ERROR = 1
+IL_TELEPHONE_CODE = "+972"
 
 
-class Yad2Bot:
-    def __init__(self, token: str, scanner: Yad2):
+class TelegramBot:
+    def __init__(self, token: str, scanner: Yad2Scanner):
         self._token = token
         self._updater = Updater(token=self._token, use_context=True)
         self._dispatcher = self._updater.dispatcher
         self._scanner = scanner
-        self._clients = Yad2Bot._load_clients()
+        self._clients = TelegramBot._load_clients()
 
         self._scan = True
 
@@ -54,19 +57,24 @@ class Yad2Bot:
             for item in self._scanner.last_scan:
                 self._updater.bot.send_photo(chat_id=client_chat_id, photo=item.picture, caption=item.__repr__())
         else:
-            Yad2Bot.unknown(update, context)
+            TelegramBot.unknown(update, context)
 
-    @staticmethod
-    def handle_item_reply(update: Update, context: CallbackContext):
+    def handle_item_reply(self, update: Update, context: CallbackContext):
 
         if any([agreement in update.message.text.lower() for agreement in YES]):
             logging.info(f"handling item with caption {update.message.reply_to_message.caption.encode()}")
             try:
-                logging.info(update.message.reply_to_message.caption.splitlines() + [update.message.reply_to_message.photo])
                 item = Details(
                     *(update.message.reply_to_message.caption.splitlines() + [update.message.reply_to_message.photo]))
 
-                context.bot.send_message(chat_id=update.effective_chat.id, text=f"Sending {item.title} : {item.price}")
+                phone_number = f"{IL_TELEPHONE_CODE}{self._scanner.get_phone_number(item.link).replace('-', '')[1:]}"
+                msg_body = consts.ITEM_MESSAGE.format(item.title, item.price)
+                text_link = f"<a href=\"https://wa.me/{phone_number}?text={urllib.parse.quote(msg_body)}\">Whatsapp</a>"
+
+                context.bot.send_message(chat_id=update.effective_chat.id,
+                                         text=text_link,
+                                         parse_mode=ParseMode.HTML,
+                                         reply_to_message_id=update.message.message_id)
             except TypeError:
                 context.bot.send_message(chat_id=update.effective_chat.id, text="Cannot send, item is corrupted")
                 logging.error(f"failed to fetch item {update.message.reply_to_message.caption}")
@@ -97,7 +105,6 @@ class Yad2Bot:
     def scan_loop(self):
         last_scanned_items = {}
         while self._scan:
-            self._scanner.setup_driver()
             scanned_items = self._scanner.scan()
             new_items = scanned_items - scanned_items.intersection(last_scanned_items)
             logging.info(f"scanned new {len(scanned_items)} items")
@@ -109,7 +116,7 @@ class Yad2Bot:
     def serve(self):
         watch_thread = Thread(target=self.scan_loop)
 
-        item_handler = MessageHandler(Filters.text & Filters.reply, Yad2Bot.handle_item_reply)
+        item_handler = MessageHandler(Filters.text & Filters.reply, self.handle_item_reply)
         self._dispatcher.add_handler(item_handler)
 
         member_update_handler = MessageHandler(Filters.all, self._member_update)
