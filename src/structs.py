@@ -1,30 +1,19 @@
 import dataclasses
 import os
-import hashlib
 
 
 @dataclasses.dataclass
 class Details:
+    LINK_INDEX = 2
+
     title: str
     price: int
     link: str
-    picture: str
     area: str
-    _id: str
-    sent: bool
-
-    def __init__(self, title: str, price: int, link: str, picture: str, area: str):
-        self.title = title
-        self.price = price
-        self.link = link
-        self.picture = picture
-        self.area = area
-        self._id = hashlib.md5("\n".join(self.__repr__().strip().splitlines()).encode()).hexdigest()
-        self.sent = False
+    picture: str
 
     def __repr__(self):
-        return os.linesep.join([self.title, str(self.price), self.area])
+        return os.linesep.join([self.title, str(self.price), self.link, self.area])
 
-    @property
-    def item_id(self):
-        return self._id
+    def __hash__(self):
+        return hash(os.linesep.join([str(self.__dict__[key]) for key in self.__dict__]))

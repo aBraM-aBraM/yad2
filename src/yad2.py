@@ -1,5 +1,5 @@
 import logging
-from typing import List, Callable, Iterable
+from typing import List, Callable, Iterable, Set
 
 import undetected_chromedriver
 from bs4 import BeautifulSoup
@@ -9,16 +9,48 @@ from undetected_chromedriver.webelement import WebElement
 from selenium.common.exceptions import NoSuchElementException
 
 import utils
+from src import consts
 from structs import Details
+
+
+def initialize_driver():
+    options = undetected_chromedriver.ChromeOptions()
+
+    # setting profile
+    options.user_data_dir = consts.PROFILE_PATH
+
+    # just some options passing in to skip annoying popups
+    options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
+
+    driver = undetected_chromedriver.Chrome(options=options)
+    driver.implicitly_wait(10)
+
+    return driver
 
 
 class Yad2:
     YAD2_ITEM_PATTERN = re.compile(r"^feed_item_\d+\b")  # item id regex
 
-    def __init__(self, driver: undetected_chromedriver.Chrome, url: str):
-        self._driver = driver
+    def __init__(self, url: str,
+                 predicates: List[Callable[[Details], bool]] = tuple(),
+                 query_predicates: List[str] = tuple()):
+        self._driver = None
         self._base_url = url
         self._current_url = None
+        self._predicates = predicates
+        self._query_predicates = query_predicates
+
+        self._last_scan: List[Details] = []
+
+    @property
+    def last_scan(self):
+        return self._last_scan
+
+    def setup_driver(self):
+        # for some reason the driver needs to be initialized
+        # in the thread it is running in
+        if self._driver is None:
+            self._driver = initialize_driver()
 
     def _get_items_elements(self) -> List[BeautifulSoup]:
         return [web_element for web_element in
@@ -54,11 +86,11 @@ class Yad2:
         logging.info(f"loading {self._current_url}")
         self._driver.get(self._current_url)
 
-    def get_predicated_products(self, *predicates: Callable[[Details], bool], max_pages: int = 0,
-                                query_predicates: Iterable[str] = tuple()) -> List[Details]:
-        products = []
+    def scan(self, max_pages: int = 0, predicates: List[Callable[[Details], bool]] = tuple(),
+             query_predicates: List[str] = tuple()) -> Set[Details]:
+        products = set()
 
-        query_predicates_str = ''.join(query_predicates)
+        query_predicates_str = ''.join(list(query_predicates) + self._query_predicates)
 
         self._load_page(self._base_url, query_predicates_str)
 
@@ -79,10 +111,14 @@ class Yad2:
                 except ValueError:
                     # ignore products with no given price
                     continue
-                if all([predicate(product_details) for predicate in predicates]):
-                    logging.info(f"adding matching item {product_details.title}")
-                    products.append(product_details)
-
+                if predicates is not None:
+                    if all([predicate(product_details) for predicate in (list(predicates) + self._predicates)]):
+                        logging.info(f"adding matching item {product_details.title}")
+                        products.add(product_details)
+                else:
+                    products.add(product_details)
+        self._last_scan = products
+        self._driver.close()
         return products
 
     def _get_item_link(self, web_element: BeautifulSoup):
@@ -92,5 +128,5 @@ class Yad2:
         return Details(title=web_element.find(class_="title").text,
                        price=int(web_element.find(class_="price").text.partition('₪')[0].replace(",", "").strip()),
                        link=self._get_item_link(web_element),
-                       picture=web_element.find(class_="feedImage")["src"],
-                       area=web_element.find(class_="area").text)
+                       area=web_element.find(class_="area").text,
+                       picture=web_element.find(class_="feedImage")["src"])
