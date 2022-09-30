@@ -1,6 +1,7 @@
 import json
 import time
 import traceback
+import pathlib
 from threading import Thread
 from typing import Set
 
@@ -17,7 +18,7 @@ from src.structs import Details
 from src.yad2_scanner import Yad2Scanner
 
 YES = ["yes", "y"]
-MEMBERS_CHAT_IDS_PATH = "../secrets/members_chat_ids.secret"
+MEMBERS_CHAT_IDS_PATH = consts.SECRETS_DIR / "members_chat_ids.secret"
 
 UNKNOWN_ERROR = 1
 IL_TELEPHONE_CODE = "+972"
@@ -44,7 +45,7 @@ class TelegramBot:
     def _add_client(self, client_chat_id: str):
         logging.info(f"new client {client_chat_id}")
         self._clients.add(client_chat_id)
-        with open(MEMBERS_CHAT_IDS_PATH, "w+") as members_chat_ids_fd:
+        with open(MEMBERS_CHAT_IDS_PATH, "w") as members_chat_ids_fd:
             json.dump(list(self._clients), members_chat_ids_fd)
 
     def _member_update(self, update: Update, context: CallbackContext):

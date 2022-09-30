@@ -9,17 +9,18 @@ import re
 from undetected_chromedriver.webelement import WebElement
 from selenium.common.exceptions import NoSuchElementException
 
-import utils
+from src import utils
 from src import consts
-from structs import Details
+from src.structs import Details
 
 
 class Yad2Scanner:
     YAD2_ITEM_PATTERN = re.compile(r"^feed_item_\d+\b")  # item id regex
 
-    def __init__(self, url: str,
+    def __init__(self, url: str, chromedriver_path: str,
                  predicates: List[Callable[[Details], bool]] = tuple(),
                  query_predicates: List[str] = tuple()):
+        self._chromedriver_path = chromedriver_path
         self._driver = None
         self._base_url = url
         self._current_url = None
@@ -38,7 +39,7 @@ class Yad2Scanner:
         # just some options passing in to skip annoying popups
         options.add_argument('--no-first-run --no-service-autorun --password-store=basic')
 
-        driver = undetected_chromedriver.Chrome(options=options, driver_executable_path=r"D:\chromedriver.exe")
+        driver = undetected_chromedriver.Chrome(options=options, driver_executable_path=self._chromedriver_path)
         driver.implicitly_wait(10)
 
         self._driver = driver

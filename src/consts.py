@@ -1,8 +1,10 @@
 import os
+import pathlib
 
-PRODUCTS_DIR = "../products"
-CONNECTION_DB_STRING_PATH = "../secrets/connection_string.secret"
-PROFILE_PATH = r"../bin"
+
+PROJECT_DIR = pathlib.Path(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+SECRETS_DIR = PROJECT_DIR / "secrets"
+PROFILE_PATH = PROJECT_DIR / "bin"
 
 BASE_URL = "https://www.yad2.co.il/products/"
 ELECTRIC_GUITARS_URL = os.path.join(BASE_URL, "musical-instruments?category=4&item=20&type=454")
